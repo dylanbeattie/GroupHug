@@ -38,9 +38,14 @@ namespace GroupHug.Website.Controllers {
                 Guid.NewGuid().ToString() + Path.GetExtension(file.FileName));
             file.SaveAs(tempFilePath);
 
+            // TODO: this doesn't work - we can't reuse the public ID. Need to 
+            // capture a fresh one each time and persist it alongside the employee
+            // info somewhere - either in AD or in a local/synced database.
+            // Ho hum. :/
             var uploadParams = new ImageUploadParams() {
                 File = new FileDescription(tempFilePath),
-                PublicId = ((Employee)User.Identity).SamAccountName
+                PublicId = ((Employee)User.Identity).SamAccountName,
+                Invalidate = true
             };
 
             var cloudinary = new Cloudinary(cloudinaryAccount);
