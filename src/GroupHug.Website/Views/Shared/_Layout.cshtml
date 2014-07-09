@@ -7,12 +7,12 @@
     <meta name="viewport" content="width=device-width" />
     <title>OH HAI!</title>
 </head>
-    <body>
-        <header>
-            
+<body>
+    <header>
+            <a href="@Url.Action("Me", "Home")">@User.Identity.Name</a>
         </header>
-        <div>
-            @RenderBody()
-        </div>
-    </body>
+    <div>
+        @RenderBody()
+    </div>
+</body>
 </html>
