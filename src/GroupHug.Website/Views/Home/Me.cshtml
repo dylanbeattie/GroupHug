@@ -1,5 +1,11 @@
 ﻿@model GroupHug.Website.Services.Employee
-
 @Model.SamAccountName
 @Model.DisplayName
 @Model.EmailAddress
+<img src="@Model.ImageUrl" width="256" height="256" />
+<p>
+    Upload your photo:</p>
+<form action="@Url.Action("Upload", "Home")" enctype="multipart/form-data" method="POST">
+<input type="file" name="file" />
+<input type="submit" />
+</form>

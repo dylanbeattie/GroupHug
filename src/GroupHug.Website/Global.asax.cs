@@ -22,7 +22,7 @@ namespace GroupHug.Website {
         }
 
         protected void Application_AuthenticateRequest(object sender, EventArgs e) {
-            if (User.Identity is WindowsIdentity) {
+            if (User != null && User.Identity is WindowsIdentity) {
                 var directory = new ActiveDirectoryServer();
                 var employee = directory.Find(User.Identity);
                 HttpContext.Current.User = new GenericPrincipal(employee, new string[] { });

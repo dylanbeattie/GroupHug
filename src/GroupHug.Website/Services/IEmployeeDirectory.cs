@@ -104,5 +104,7 @@ namespace GroupHug.Website.Services {
         public bool IsAuthenticated {
             get { return (true); }
         }
+
+        public object ImageUrl { get; set; }
     }
 }
