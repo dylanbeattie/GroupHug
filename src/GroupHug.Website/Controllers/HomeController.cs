@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using CloudinaryDotNet;
@@ -14,6 +16,8 @@ namespace GroupHug.Website.Controllers {
 
         private const string imageUrlFormat =
             "http://res.cloudinary.com/{0}/image/upload/w_256,h_256,c_thumb,g_face/{1}.jpg";
+        private const string thumbnailPhotoUrlFormat =
+            "http://res.cloudinary.com/{0}/image/upload/w_96,h_96,c_thumb,g_face/{1}.jpg";
         private Account cloudinaryAccount = new Account {
             ApiKey = "631184585298337",
             ApiSecret = "zCcMvsiHsJWU3jbjejOoZhyWDyk",
@@ -24,16 +28,21 @@ namespace GroupHug.Website.Controllers {
             return View();
         }
         public ActionResult People() {
-            return View();
+            var ad = new ActiveDirectoryServer();
+            var employees = ad.ListEmployees();
+            foreach (var employee in employees) {
+                employee.ImageUrl = String.Format(imageUrlFormat, cloudinaryAccount.Cloud, employee.Photo);
+            }
+            return View(employees);
         }
 
         public ActionResult Me() {
             var employee = (Employee)User.Identity;
-            employee.ImageUrl = String.Format(imageUrlFormat, cloudinaryAccount.Cloud, employee.SamAccountName);
+            employee.ImageUrl = String.Format(imageUrlFormat, cloudinaryAccount.Cloud, employee.Photo);
             return (View(employee));
         }
 
-        public ActionResult UPload(HttpPostedFileBase file) {
+        public ActionResult Upload(HttpPostedFileBase file) {
             var tempFilePath = Path.Combine(Path.GetTempPath(),
                 Guid.NewGuid().ToString() + Path.GetExtension(file.FileName));
             file.SaveAs(tempFilePath);
@@ -42,14 +51,30 @@ namespace GroupHug.Website.Controllers {
             // capture a fresh one each time and persist it alongside the employee
             // info somewhere - either in AD or in a local/synced database.
             // Ho hum. :/
+            var publicId = String.Format("{0}.{1}", ((Employee)User.Identity).SamAccountName, DateTime.Now.ToString("yyyyMMddhhmmssff"));
             var uploadParams = new ImageUploadParams() {
                 File = new FileDescription(tempFilePath),
-                PublicId = ((Employee)User.Identity).SamAccountName,
-                Invalidate = true
+                PublicId = publicId,
             };
 
             var cloudinary = new Cloudinary(cloudinaryAccount);
             var result = cloudinary.Upload(uploadParams);
+
+            var principalContext = new PrincipalContext(ContextType.Domain);
+            var user = UserPrincipal.FindByIdentity(principalContext, User.Identity.Name);
+            var directoryEntry = user.GetUnderlyingObject() as DirectoryEntry;
+
+            directoryEntry.Properties["photo"].Value = result.PublicId;
+
+            var thumbnailPhotoUrl = String.Format(thumbnailPhotoUrlFormat, cloudinaryAccount.Cloud, result.PublicId);
+            using (var wc = new WebClient()) {
+                var thumbnailPhotoAsBytes = wc.DownloadData(thumbnailPhotoUrl);
+                directoryEntry.Properties["thumbnailPhoto"].Value = thumbnailPhotoAsBytes;
+                var jpegPhotoUrl = String.Format(imageUrlFormat, cloudinaryAccount.Cloud, result.PublicId);
+                var jpegPhotoAsBytes = wc.DownloadData(jpegPhotoUrl);
+                directoryEntry.Properties["jpegPhoto"].Value = jpegPhotoAsBytes;
+            }
+            directoryEntry.CommitChanges();
             return (RedirectToAction("Me"));
         }
     }
