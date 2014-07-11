@@ -3,7 +3,10 @@
 <h2>
     Spotlight People!</h2>
 @foreach (var employee in Model) {
-    <img src="@employee.ImageUrl" alt="@employee.DisplayName" title="@employee.DisplayName"/>
+    <div class="photo">
+        <img src="@employee.ImageUrl" alt="@employee.DisplayName" title="@employee.DisplayName"/>
+        <div>@employee.DisplayName</div>
+    </div>
 }
 <hr style="clear: both;" />
 Missing? <a href="@Url.Action("Me", "Home")">Add Yourself Here!</a> 

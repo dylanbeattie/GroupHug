@@ -15,7 +15,7 @@ namespace GroupHug.Website.Controllers {
     public class HomeController : Controller {
 
         private const string imageUrlFormat =
-            "http://res.cloudinary.com/{0}/image/upload/w_256,h_256,c_thumb,g_face/{1}.jpg";
+            "http://res.cloudinary.com/{0}/image/upload/w_160,h_200,c_thumb,g_face/{1}.jpg";
         private const string thumbnailPhotoUrlFormat =
             "http://res.cloudinary.com/{0}/image/upload/w_96,h_96,c_thumb,g_face/{1}.jpg";
         private Account cloudinaryAccount = new Account {
@@ -74,6 +74,7 @@ namespace GroupHug.Website.Controllers {
                 var jpegPhotoAsBytes = wc.DownloadData(jpegPhotoUrl);
                 directoryEntry.Properties["jpegPhoto"].Value = jpegPhotoAsBytes;
             }
+            directoryEntry.Properties["extensionAttribute1"].Value = "intranet";
             directoryEntry.CommitChanges();
             return (RedirectToAction("Me"));
         }

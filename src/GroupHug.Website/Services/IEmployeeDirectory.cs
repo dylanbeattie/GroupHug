@@ -8,12 +8,32 @@ using System.Web;
 
 namespace GroupHug.Website.Services {
 
+    [DirectoryObjectClass("user")]
+    [DirectoryRdnPrefix("CN")]
+    public class ExtendedUserPrincipal : UserPrincipal {
+        public ExtendedUserPrincipal(PrincipalContext context) : base(context) { }
+        public ExtendedUserPrincipal(PrincipalContext context, string samAccountName, string password, bool enabled) : base(context, samAccountName, password, enabled) { }
+
+        [DirectoryProperty("extensionAttribute1")]
+        public string ExtensionAttribute1 {
+            get {
+                if (ExtensionGet("extensionAttribute1").Length != 1) return (null);
+                return (ExtensionGet("extensionAttribute1")[0] as string);
+            }
+            set {
+                this.ExtensionSet("extensionAttribute1", value);
+            }
+        }
+    }
+
     public class ActiveDirectoryServer {
 
         public IEnumerable<Employee> ListEmployees() {
             var employees = new List<Employee>();
             using (var principalContext = new PrincipalContext(ContextType.Domain)) {
-                using (var principalSearcher = new PrincipalSearcher(new UserPrincipal(principalContext))) {
+                var filter = new ExtendedUserPrincipal(principalContext);
+                filter.ExtensionAttribute1 = "*";
+                using (var principalSearcher = new PrincipalSearcher(filter)) {
                     foreach (var searchResult in principalSearcher.FindAll()) {
                         var directoryEntry = searchResult.GetUnderlyingObject() as DirectoryEntry;
 
